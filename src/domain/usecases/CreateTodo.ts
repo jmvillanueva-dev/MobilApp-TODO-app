@@ -7,7 +7,7 @@ export class CreateTodo {
 
   async execute(data: CreateTodoDTO): Promise<Todo> {
     if (!data.title.trim()) {
-      throw new Error("❌ Ingrese un título");
+      throw new Error("❌ Debe ingresar un título");
     }
 
     if (data.title.length < 3) {
@@ -15,9 +15,13 @@ export class CreateTodo {
     }
 
     if (data.title.length > 200) {
-      throw new Error("❌ Rl titulo debe tener menos de 200 caracteres");
+      throw new Error("❌ El titulo es demasiado largo");
     }
 
-    return this.repository.create(data);
+    if (!data.userId) {
+      throw new Error("User ID is required");
+    }
+
+    return await this.repository.create(data);
   }
 }
