@@ -44,20 +44,14 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    if (!containerReady || authLoading) return;
+    if (authLoading) return;
 
-    const inAuthGroup =
-      segments[0] === "(auth)" &&
-      (segments[1] === "login" || segments[1] === "register");
-      
-    if (!user && !inAuthGroup) {
-      // Usuario no autenticado intenta acceder a ruta protegida
-      router.replace("/login" as any);
-    } else if (user && inAuthGroup) {
-      // Usuario autenticado intenta acceder a login/register
+    if (user) {
       router.replace("/(app)/(tabs)/todos");
+    } else {
+      router.replace("/(auth)/login");
     }
-  }, [user, segments, containerReady, authLoading]);
+  }, [user, authLoading]);
 
 
   useEffect(() => {

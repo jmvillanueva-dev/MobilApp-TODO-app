@@ -2,6 +2,10 @@ import { useState, useEffect, useCallback } from "react";
 import { container } from "@/src/di/container";
 import { User } from "@/src/domain/entities/User";
 import  { AuthContextType } from "../contexts/AuthContext";
+import {
+  EmailAlreadyExistsError,
+  InvalidEmailError,
+} from "@/src/domain/errors/AuthErrors";
 
 export const useAuth = (): AuthContextType => {
   const [user, setUser] = useState<User | null>(null);
@@ -42,7 +46,14 @@ export const useAuth = (): AuthContextType => {
         setUser(newUser);
         return true;
       } catch (err: any) {
-        setError(err.message);
+        // Manejo específico de errores de email
+        if (err instanceof EmailAlreadyExistsError) {
+          setError("❌ " + err.message);
+        } else if (err instanceof InvalidEmailError) {
+          setError("❌ " + err.message);
+        } else {
+          setError(err.message);
+        }
         return false;
       } finally {
         setLoading(false);
@@ -61,7 +72,12 @@ export const useAuth = (): AuthContextType => {
         setUser(loggedUser);
         return true;
       } catch (err: any) {
-        setError(err.message);
+        // También mejoramos el login para errores de email
+        if (err instanceof InvalidEmailError) {
+          setError("❌ " + err.message);
+        } else {
+          setError(err.message);
+        }
         return false;
       } finally {
         setLoading(false);
@@ -94,14 +110,8 @@ export const useAuth = (): AuthContextType => {
       try {
         setLoading(true);
         setError(null);
-
-        // Ejecutar el caso de uso
         await container.updateProfile.execute(user.id, { displayName });
-
-        // 🔥 ACTUALIZAR EL ESTADO LOCAL INMEDIATAMENTE
-        // Esto asegura que todos los componentes vean el cambio al instante
         setUser((prevUser) => (prevUser ? { ...prevUser, displayName } : null));
-
         return true;
       } catch (err: any) {
         setError(err.message);
