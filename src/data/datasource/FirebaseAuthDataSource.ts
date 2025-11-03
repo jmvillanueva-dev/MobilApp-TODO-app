@@ -11,7 +11,7 @@ import { auth, db } from "@/FirebaseConfig";
 import { User } from "@/src/domain/entities/User";
 
 export class FirebaseAuthDataSource {
-  // Metodo privado: convertir firebaseuser a user
+  // ===== MÉTODO PRIVADO: CONVERTIR FIREBASEUSER A USER =====
   private mapFirebaseUserToUser(firebaseUser: FirebaseUser): User {
     return {
       id: firebaseUser.uid,
@@ -20,7 +20,7 @@ export class FirebaseAuthDataSource {
       createdAt: new Date(firebaseUser.metadata.creationTime || Date.now()),
     };
   }
-
+  // ===== REGISTRO DE USUARIO =====
   async register(
     email: string,
     password: string,
@@ -34,18 +34,17 @@ export class FirebaseAuthDataSource {
         password
       );
       const firebaseUser = userCredential.user;
-
       // 2. Actualizar perfil en Auth (displayName)
-      await updateProfile(firebaseUser, { displayName });
-
+      await updateProfile(firebaseUser, {
+        displayName,
+      });
       // 3. Guardar datos adicionales en Firestore
       await setDoc(doc(db, "users", firebaseUser.uid), {
         email,
         displayName,
         createdAt: new Date(),
       });
-
-      // 4. Retornar un usuario mapeado
+      // 4. Retornar usuario mapeado
       return {
         id: firebaseUser.uid,
         email,
@@ -54,21 +53,18 @@ export class FirebaseAuthDataSource {
       };
     } catch (error: any) {
       console.error("Error registering user:", error);
-
-      // Mensaje de error mas amigables
+      // Mensajes de error más amigables
       if (error.code === "auth/email-already-in-use") {
-        throw new Error("El correo electrónico ya está en uso.");
+        throw new Error("Este email ya está registrado");
       } else if (error.code === "auth/invalid-email") {
-        throw new Error("El correo electrónico no es válido.");
+        throw new Error("Email inválido");
       } else if (error.code === "auth/weak-password") {
-        throw new Error("La contraseña debe tener al menos 6 caracteres.");
+        throw new Error("La contraseña es muy débil");
       }
-
-      throw new Error(error.message || "Error al registrar el usuario.");
+      throw new Error(error.message || "Error al registrar usuario");
     }
   }
-
-  // Login
+  // ===== LOGIN =====
   async login(email: string, password: string): Promise<User> {
     try {
       // 1. Autenticar con Firebase Auth
@@ -78,22 +74,19 @@ export class FirebaseAuthDataSource {
         password
       );
       const firebaseUser = userCredential.user;
-
       // 2. Obtener datos adicionales de Firestore
       const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
       const userData = userDoc.data();
-
-      // 3. Retornar un usuario mapeado
+      // 3. Retornar usuario completo
       return {
         id: firebaseUser.uid,
-        email,
+        email: firebaseUser.email || "",
         displayName:
           userData?.displayName || firebaseUser.displayName || "Usuario",
         createdAt: userData?.createdAt?.toDate() || new Date(),
       };
     } catch (error: any) {
-      console.error("Error logging in: ", error);
-
+      console.error("Error logging in:", error);
       // Mensajes de error más amigables
       if (error.code === "auth/user-not-found") {
         throw new Error("Usuario no encontrado");
@@ -102,22 +95,19 @@ export class FirebaseAuthDataSource {
       } else if (error.code === "auth/invalid-credential") {
         throw new Error("Credenciales inválidas");
       }
-
       throw new Error(error.message || "Error al iniciar sesión");
     }
   }
-
-  //Logout
+  // ===== LOGOUT =====
   async logout(): Promise<void> {
     try {
       await signOut(auth);
     } catch (error: any) {
-      console.error("Error logging out: ", error);
+      console.error("Error logging out:", error);
       throw new Error(error.message || "Error al cerrar sesión");
     }
   }
-
-  // Obtener ususario actual
+  // ===== OBTENER USUARIO ACTUAL =====
   async getCurrentUser(): Promise<User | null> {
     try {
       const firebaseUser = auth.currentUser;
@@ -128,8 +118,7 @@ export class FirebaseAuthDataSource {
       return null;
     }
   }
-
-  // Observar cambios de autenticacion
+  // ===== OBSERVAR CAMBIOS DE AUTENTICACIÓN =====
   onAuthStateChanged(callback: (user: User | null) => void): () => void {
     // Retorna función de desuscripción
     return firebaseOnAuthStateChanged(auth, (firebaseUser) => {

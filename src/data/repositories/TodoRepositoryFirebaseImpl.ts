@@ -7,7 +7,7 @@ import { FirebaseTodoDataSource } from "../datasource/FirebaseTodoDataSource";
 
 export class TodoRepositoryFirebaseImpl implements TodoRepository {
   constructor(private dataSource: FirebaseTodoDataSource) {}
-
+  // ← MODIFICADO: ahora recibe userId
   async getAll(userId: string): Promise<Todo[]> {
     return await this.dataSource.getAllTodos(userId);
   }
@@ -15,7 +15,7 @@ export class TodoRepositoryFirebaseImpl implements TodoRepository {
   async getById(id: string): Promise<Todo | null> {
     return await this.dataSource.getTodoById(id);
   }
-
+  // ← MODIFICADO: ahora usa data.userId
   async create(data: CreateTodoDTO): Promise<Todo> {
     return await this.dataSource.createTodo(data.title, data.userId);
   }
@@ -27,7 +27,7 @@ export class TodoRepositoryFirebaseImpl implements TodoRepository {
       data.title
     );
   }
-
+  
   async delete(id: string): Promise<void> {
     await this.dataSource.deleteTodo(id);
   }

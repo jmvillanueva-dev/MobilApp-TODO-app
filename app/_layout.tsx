@@ -4,14 +4,15 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { container } from "@/src/di/container"; // 🟢 Importar el container
+import { container } from "@/src/di/container";
+import { useAuth } from "@/src/presentation/hooks/useAuth";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -23,6 +24,10 @@ export default function RootLayout() {
 
   // 🟢 Inicializar el container
   const [containerReady, setContainerReady] = useState(false);
+  const { user, loading: authLoading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+
 
   useEffect(() => {
     const initContainer = async () => {
@@ -38,12 +43,29 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    if (loaded && containerReady) {
+    if (!containerReady || authLoading) return;
+
+    const inAuthGroup =
+      segments[0] === "(tabs)" &&
+      (segments[1] === "login" || segments[1] === "register");
+      
+    if (!user && !inAuthGroup) {
+      // Usuario no autenticado intenta acceder a ruta protegida
+      router.replace("/(tabs)/login" as any);
+    } else if (user && inAuthGroup) {
+      // Usuario autenticado intenta acceder a login/register
+      router.replace("/(tabs)/todos");
+    }
+  }, [user, segments, containerReady, authLoading]);
+
+
+  useEffect(() => {
+    if (loaded && containerReady && !authLoading) {
       SplashScreen.hideAsync();
     }
-  }, [loaded, containerReady]);
+  }, [loaded, containerReady, authLoading]);
 
-  if (!loaded || !containerReady) {
+  if (!loaded || !containerReady || authLoading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator size="large" />
@@ -54,6 +76,8 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)/login" />
+        <Stack.Screen name="(tabs)/register" />
         <Stack.Screen name="(tabs)/todos" />
       </Stack>
     </ThemeProvider>
