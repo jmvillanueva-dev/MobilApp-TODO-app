@@ -23,13 +23,13 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     const success = await login(email, password);
     if (success) {
-      router.replace("/(tabs)/todos");
+      router.replace("(app)/(tabs)/todos" as any);
     } else {
       Alert.alert("Error", error || "No se pudo iniciar sesión");
     }
   };
   const goToRegister = () => {
-    router.push("/(tabs)/register");
+    router.push("(auth)/register" as any);
   };
 
   return (

@@ -1,7 +1,8 @@
 // 🟢 NUEVA VERSION: UI completamente desacoplada de la base de datos
 
 import { useTodos } from "@/src/presentation/hooks/useTodos";
-import { useAuth } from "@/src/presentation/hooks/useAuth";
+// import { useAuth } from "@/src/presentation/hooks/useAuth";
+import { useAuthContext } from "@/src/presentation/contexts/AuthContext";
 import { useRouter } from "expo-router";
 import {
   createStyles,
@@ -18,15 +19,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
 // 🟢 BENEFICIO: Este componente NO SABE si usamos SQLite, Firebase, o una API
 // Solo sabe que puede llamar a addTodo, toggleTodo, deleteTodo
 
 export default function TodosScreenClean() {
   const [inputText, setInputText] = useState("");
   const { todos, loading, addTodo, toggleTodo, deleteTodo } = useTodos();
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuthContext();
   const router = useRouter();
 
   // 🎨 Detectar tema y crear estilos dinámicamente
@@ -93,12 +92,11 @@ export default function TodosScreenClean() {
   const handleLogout = async () => {
     const success = await logout();
     if (success) {
-      router.replace("/(tabs)/login");
+      router.replace("/(auth)/login");
     }
   };
 
   return (
-    // <SafeAreaView>
       <View style={styles.container}>
         {/* {Header con info de usuario} */}
         <View style={styles.header}>
@@ -145,6 +143,5 @@ export default function TodosScreenClean() {
           {todos.filter((t) => t.completed).length}
         </Text>
       </View>
-    // </SafeAreaView>
   );
 }

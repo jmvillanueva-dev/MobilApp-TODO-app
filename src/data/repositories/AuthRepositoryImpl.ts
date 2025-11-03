@@ -23,4 +23,7 @@ export class AuthRepositoryImpl implements AuthRepository {
   onAuthStateChanged(callback: (user: User | null) => void): () => void {
     return this.dataSource.onAuthStateChanged(callback);
   }
+  async updateProfile(userId: string, data: { displayName: string }): Promise<void> {
+    return this.dataSource.updateProfile(userId, data);
+  }
 }

@@ -13,6 +13,7 @@ import { RegisterUser } from "../domain/usecases/RegisterUser";
 import { LoginUser } from "../domain/usecases/LoginUser";
 import { LogoutUser } from "../domain/usecases/LogoutUser";
 import { GetCurrentUser } from "../domain/usecases/GetCurrentUser";
+import { UpdateProfile } from "../domain/usecases/UpdateProfile";
 import { AuthRepository } from "../domain/repositories/AuthRepository";
 
 import { GetAllTodos } from "@/src/domain/usecases/GetAllTodos";
@@ -35,6 +36,7 @@ class DIContainer {
   private _loginUser?: LoginUser;
   private _logoutUser?: LogoutUser;
   private _getCurrentUser?: GetCurrentUser;
+  private _updateProfile?: UpdateProfile;
 
   private constructor() {}
 
@@ -113,6 +115,12 @@ class DIContainer {
       this._getCurrentUser = new GetCurrentUser(this.authRepository);
     }
     return this._getCurrentUser;
+  }
+  get updateProfile(): UpdateProfile {
+    if (!this._updateProfile) {
+      this._updateProfile = new UpdateProfile(this.authRepository);
+    }
+    return this._updateProfile;
   }
 }
 

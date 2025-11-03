@@ -3,10 +3,10 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged as firebaseOnAuthStateChanged,
-  updateProfile,
+  updateProfile as firebaseUpdateProfile, // Renamed to avoid conflict
   User as FirebaseUser,
 } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore"; // Import updateDoc
 import { auth, db } from "@/FirebaseConfig";
 import { User } from "@/src/domain/entities/User";
 
@@ -35,7 +35,7 @@ export class FirebaseAuthDataSource {
       );
       const firebaseUser = userCredential.user;
       // 2. Actualizar perfil en Auth (displayName)
-      await updateProfile(firebaseUser, {
+      await firebaseUpdateProfile(firebaseUser, {
         displayName,
       });
       // 3. Guardar datos adicionales en Firestore
@@ -112,18 +112,91 @@ export class FirebaseAuthDataSource {
     try {
       const firebaseUser = auth.currentUser;
       if (!firebaseUser) return null;
-      return this.mapFirebaseUserToUser(firebaseUser);
+
+      // Obtener datos actualizados de Firestore para asegurar consistencia
+      const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+      const userData = userDoc.data();
+
+      return {
+        id: firebaseUser.uid,
+        email: firebaseUser.email || "",
+        displayName:
+          userData?.displayName || firebaseUser.displayName || "Usuario",
+        createdAt:
+          userData?.createdAt?.toDate() ||
+          new Date(firebaseUser.metadata.creationTime || Date.now()),
+      };
     } catch (error) {
       console.error("Error getting current user:", error);
       return null;
     }
   }
+
+  // ===== ACTUALIZAR PERFIL DE USUARIO =====
+  async updateProfile(
+    userId: string,
+    data: { displayName: string }
+  ): Promise<void> {
+    try {
+      const user = auth.currentUser;
+
+      if (!user || user.uid !== userId) {
+        throw new Error("No authenticated user found to update.");
+      }
+
+      // 1. Actualizar en Firebase Auth
+      await firebaseUpdateProfile(user, {
+        displayName: data.displayName,
+      });
+
+      // 2. Actualizar en Firestore
+      const userRef = doc(db, "users", userId);
+      await updateDoc(userRef, {
+        displayName: data.displayName,
+        updatedAt: new Date(), // Optional: add update timestamp
+      });
+
+      // 3. 🔥 FORZAR ACTUALIZACIÓN DEL TOKEN para disparar onAuthStateChanged
+      // Esto es clave para que todos los componentes se enteren del cambio
+      await user.getIdToken(true); // Force token refresh
+
+      console.log("Profile updated successfully, token refreshed");
+    } catch (error: any) {
+      console.error("Error updating profile:", error);
+
+      // Mensajes de error más específicos
+      if (error.code === "auth/requires-recent-login") {
+        throw new Error(
+          "Por seguridad, necesitas volver a iniciar sesión para actualizar tu perfil"
+        );
+      }
+
+      throw new Error(error.message || "Error al actualizar el perfil");
+    }
+  }
+
   // ===== OBSERVAR CAMBIOS DE AUTENTICACIÓN =====
   onAuthStateChanged(callback: (user: User | null) => void): () => void {
-    // Retorna función de desuscripción
-    return firebaseOnAuthStateChanged(auth, (firebaseUser) => {
+    return firebaseOnAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        callback(this.mapFirebaseUserToUser(firebaseUser));
+        try {
+          // Obtener datos actualizados de Firestore
+          const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+          const userData = userDoc.data();
+          
+          const user: User = {
+            id: firebaseUser.uid,
+            email: firebaseUser.email || "",
+            displayName: userData?.displayName || firebaseUser.displayName || "Usuario",
+            createdAt: userData?.createdAt?.toDate() || new Date(firebaseUser.metadata.creationTime || Date.now()),
+          };
+          
+          callback(user);
+        } catch (error) {
+          console.error("Error fetching user data in auth state change:", error);
+          // Fallback to basic user data
+          callback(this.mapFirebaseUserToUser(firebaseUser));
+        }
       } else {
         callback(null);
       }

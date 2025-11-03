@@ -14,6 +14,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { container } from "@/src/di/container";
 import { useAuth } from "@/src/presentation/hooks/useAuth";
 
+
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -46,15 +47,15 @@ export default function RootLayout() {
     if (!containerReady || authLoading) return;
 
     const inAuthGroup =
-      segments[0] === "(tabs)" &&
+      segments[0] === "(auth)" &&
       (segments[1] === "login" || segments[1] === "register");
       
     if (!user && !inAuthGroup) {
       // Usuario no autenticado intenta acceder a ruta protegida
-      router.replace("/(tabs)/login" as any);
+      router.replace("/login" as any);
     } else if (user && inAuthGroup) {
       // Usuario autenticado intenta acceder a login/register
-      router.replace("/(tabs)/todos");
+      router.replace("/(app)/(tabs)/todos");
     }
   }, [user, segments, containerReady, authLoading]);
 
@@ -76,9 +77,8 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)/login" />
-        <Stack.Screen name="(tabs)/register" />
-        <Stack.Screen name="(tabs)/todos" />
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(app)" />
       </Stack>
     </ThemeProvider>
   );
