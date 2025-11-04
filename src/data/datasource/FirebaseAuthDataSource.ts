@@ -3,7 +3,8 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged as firebaseOnAuthStateChanged,
-  updateProfile as firebaseUpdateProfile, // Renamed to avoid conflict
+  updateProfile as firebaseUpdateProfile,
+  sendPasswordResetEmail,
   User as FirebaseUser,
 } from "firebase/auth";
 import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore"; // Import updateDoc
@@ -230,5 +231,29 @@ export class FirebaseAuthDataSource {
         callback(null);
       }
     });
+  }
+
+  // ===== ENVIAR EMAIL DE RECUPERACIÓN DE CONTRASEÑA =====
+  async sendPasswordResetEmail(email: string): Promise<void> {
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (error: any) {
+      console.error("Error sending password reset email:", error);
+
+      // Manejo específico de errores
+      if (error.code === "auth/user-not-found") {
+        throw new Error("❌ No existe una cuenta con este email");
+      } else if (error.code === "auth/invalid-email") {
+        throw new Error("❌ El formato del email no es válido");
+      } else if (error.code === "auth/too-many-requests") {
+        throw new Error("❌ Demasiados intentos. Intenta más tarde");
+      } else if (error.code === "auth/network-request-failed") {
+        throw new Error("❌ Error de conexión. Verifica tu internet");
+      }
+
+      throw new Error(
+        error.message || "❌ Error al enviar el email de recuperación"
+      );
+    }
   }
 }

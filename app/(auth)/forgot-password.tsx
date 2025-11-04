@@ -14,22 +14,34 @@ import {
 import { useAuth } from "@/src/presentation/hooks/useAuth";
 import { useRouter } from "expo-router";
 
-export default function LoginScreen() {
+export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const { login, loading, error } = useAuth();
+  const { sendPasswordResetEmail, loading, error } = useAuth();
   const router = useRouter();
 
-  const handleLogin = async () => {
-    const success = await login(email, password);
+  const handleSendResetEmail = async () => {
+    const success = await sendPasswordResetEmail(email);
     if (success) {
-      router.replace("(app)/(tabs)/todos" as any);
+      Alert.alert(
+        "Email enviado ✅",
+        "Se ha enviado un enlace de recuperación a tu email. Revisa tu bandeja de entrada.",
+        [
+          {
+            text: "OK",
+            onPress: () => router.back(),
+          },
+        ]
+      );
     } else {
-      Alert.alert("Error", error || "No se pudo iniciar sesión");
+      Alert.alert(
+        "Error",
+        error || "No se pudo enviar el email de recuperación"
+      );
     }
   };
-  const goToRegister = () => {
-    router.push("(auth)/register" as any);
+
+  const goToLogin = () => {
+    router.back();
   };
 
   return (
@@ -42,8 +54,13 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-          <Text style={styles.title}>📝 TodoApp</Text>
-          <Text style={styles.subtitle}>Iniciar Sesión</Text>
+          <Text style={styles.title}>🔐</Text>
+          <Text style={styles.subtitle}>Recuperar Contraseña</Text>
+          <Text style={styles.description}>
+            Ingresa tu email y te enviaremos un enlace para restablecer tu
+            contraseña.
+          </Text>
+
           <TextInput
             style={styles.input}
             placeholder="Email"
@@ -53,37 +70,25 @@ export default function LoginScreen() {
             autoCapitalize="none"
             autoCorrect={false}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Contraseña"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
-          <TouchableOpacity
-            onPress={() => router.push("(auth)/forgot-password" as any)}
-          >
-            <Text style={styles.linkText}>
-              <Text style={styles.linkForgotPasswordText}>
-                ¿Olvidaste tu contraseña?
-              </Text>
-            </Text>
-          </TouchableOpacity>
+
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleLogin}
+            onPress={handleSendResetEmail}
             disabled={loading}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Entrar</Text>
+              <Text style={styles.buttonText}>
+                Recuperar Contraseña
+              </Text>
             )}
           </TouchableOpacity>
-          <TouchableOpacity onPress={goToRegister} style={styles.linkButton}>
+
+          <TouchableOpacity onPress={goToLogin} style={styles.linkButton}>
             <Text style={styles.linkText}>
-              ¿No tienes cuenta?{" "}
-              <Text style={styles.linkTextBold}>Regístrate</Text>
+              Volver a{" "}
+              <Text style={styles.linkTextBold}>Inicio de Sesión</Text>
             </Text>
           </TouchableOpacity>
         </View>
@@ -113,15 +118,22 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 24,
     fontWeight: "600",
-    marginBottom: 40,
+    marginBottom: 20,
     textAlign: "center",
     color: "#333",
+  },
+  description: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 30,
+    lineHeight: 22,
   },
   input: {
     backgroundColor: "#fff",
     padding: 15,
     borderRadius: 10,
-    marginBottom: 15,
+    marginBottom: 20,
     fontSize: 16,
     borderWidth: 1,
     borderColor: "#ddd",
@@ -138,7 +150,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: "#fff",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
   },
   linkButton: {
@@ -149,15 +161,9 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     fontSize: 16,
-    marginBottom: 10,
   },
   linkTextBold: {
     color: "#007AFF",
     fontWeight: "bold",
   },
-  linkForgotPasswordText:{
-    color: "#007AFF",
-    // fontWeight: "bold",
-    textAlign: "right",
-  }
 });

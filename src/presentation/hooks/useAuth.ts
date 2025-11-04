@@ -102,7 +102,7 @@ export const useAuth = (): AuthContextType => {
     }
   }, []);
 
-  // Actualizar perfil - ESTA ES LA CLAVE
+  // Actualizar perfil
   const updateProfile = useCallback(
     async (displayName: string): Promise<boolean> => {
       if (!user) return false;
@@ -123,6 +123,24 @@ export const useAuth = (): AuthContextType => {
     [user]
   );
 
+  // Enviar email de recuperación de contraseña
+  const sendPasswordResetEmail = useCallback(
+    async (email: string): Promise<boolean> => {
+      try {
+        setLoading(true);
+        setError(null);
+        await container.sendPasswordResetEmail.execute(email);
+        return true;
+      } catch (err: any) {
+        setError(err.message);
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
   return {
     user,
     loading,
@@ -131,6 +149,7 @@ export const useAuth = (): AuthContextType => {
     login,
     logout,
     updateProfile,
+    sendPasswordResetEmail,
     clearError,
     isAuthenticated: !!user,
   };

@@ -18,6 +18,7 @@ interface AuthActions {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<boolean>;
   updateProfile: (displayName: string) => Promise<boolean>;
+  sendPasswordResetEmail: (email: string) => Promise<boolean>;
   clearError: () => void;
 }
 

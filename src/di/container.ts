@@ -9,12 +9,13 @@ import { FirebaseTodoDataSource } from "../data/datasource/FirebaseTodoDataSourc
 import { FirebaseAuthDataSource } from "../data/datasource/FirebaseAuthDataSource";
 import { TodoRepositoryFirebaseImpl } from "../data/repositories/TodoRepositoryFirebaseImpl";
 import { AuthRepositoryImpl } from "../data/repositories/AuthRepositoryImpl";
+import { AuthRepository } from "../domain/repositories/AuthRepository";
 import { RegisterUser } from "../domain/usecases/RegisterUser";
 import { LoginUser } from "../domain/usecases/LoginUser";
 import { LogoutUser } from "../domain/usecases/LogoutUser";
 import { GetCurrentUser } from "../domain/usecases/GetCurrentUser";
 import { UpdateProfile } from "../domain/usecases/UpdateProfile";
-import { AuthRepository } from "../domain/repositories/AuthRepository";
+import { SendPasswordResetEmail } from "../domain/usecases/SendPasswordResetEmail";
 
 import { GetAllTodos } from "@/src/domain/usecases/GetAllTodos";
 import { CreateTodo } from "@/src/domain/usecases/CreateTodo";
@@ -37,6 +38,7 @@ class DIContainer {
   private _logoutUser?: LogoutUser;
   private _getCurrentUser?: GetCurrentUser;
   private _updateProfile?: UpdateProfile;
+  private _sendPasswordResetEmail?: SendPasswordResetEmail;
 
   private constructor() {}
 
@@ -121,6 +123,14 @@ class DIContainer {
       this._updateProfile = new UpdateProfile(this.authRepository);
     }
     return this._updateProfile;
+  }
+  get sendPasswordResetEmail(): SendPasswordResetEmail {
+    if (!this._sendPasswordResetEmail) {
+      this._sendPasswordResetEmail = new SendPasswordResetEmail(
+        this.authRepository
+      );
+    }
+    return this._sendPasswordResetEmail;
   }
 }
 
