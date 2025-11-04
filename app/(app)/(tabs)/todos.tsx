@@ -13,6 +13,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import React, { useState, useMemo } from "react";
 import {
   ActivityIndicator,
+  Alert, // 🟢 IMPORTANTE: Agregar Alert aquí
   FlatList,
   Text,
   TextInput,
@@ -45,6 +46,25 @@ export default function TodosScreenClean() {
     if (success) {
       setInputText("");
     }
+  };
+
+  // 🟢 NUEVA FUNCIÓN: Confirmación antes de eliminar
+  const handleDeleteTodo = (id: string, title: string) => {
+    Alert.alert(
+      "Confirmar eliminación",
+      `¿Estás seguro de que quieres eliminar la tarea "${title}"?`,
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: () => deleteTodo(id),
+        },
+      ]
+    );
   };
 
   if (loading) {
@@ -81,7 +101,7 @@ export default function TodosScreenClean() {
         </Text>
       </TouchableOpacity>
       <TouchableOpacity
-        onPress={() => deleteTodo(item.id)}
+        onPress={() => handleDeleteTodo(item.id, item.title)} // 🟢 CAMBIO: Usar la nueva función con confirmación
         style={styles.deleteButton}
       >
         <Text style={styles.deleteButtonText}>🗑️</Text>
@@ -97,51 +117,51 @@ export default function TodosScreenClean() {
   };
 
   return (
-      <View style={styles.container}>
-        {/* {Header con info de usuario} */}
-        <View style={styles.header}>
-          <View style={styles.userAvatarPlaceholder}>
-            <Text style={styles.userAvatarText}>
-              {user?.displayName?.charAt(0) || "U"}
-            </Text>
-          </View>
-          <Text style={styles.userName}>{user?.displayName || "Usuario"}</Text>
-          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-            <Text style={styles.logoutText}>Salir</Text>
-          </TouchableOpacity>
+    <View style={styles.container}>
+      {/* {Header con info de usuario} */}
+      <View style={styles.header}>
+        <View style={styles.userAvatarPlaceholder}>
+          <Text style={styles.userAvatarText}>
+            {user?.displayName?.charAt(0) || "U"}
+          </Text>
         </View>
-
-        <Text style={styles.title}>Mis Tareas (Clean)</Text>
-
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            value={inputText}
-            onChangeText={setInputText}
-            placeholder="Nueva tarea..."
-            placeholderTextColor={
-              colorScheme === "dark"
-                ? defaultDarkTheme.placeholder
-                : defaultLightTheme.placeholder
-            }
-          />
-          <TouchableOpacity style={styles.addButton} onPress={handleAddTodo}>
-            <Text style={styles.addButtonText}>+</Text>
-          </TouchableOpacity>
-        </View>
-
-        <FlatList
-          data={todos}
-          renderItem={renderTodo}
-          keyExtractor={(item) => item.id.toString()}
-          style={styles.list}
-          contentContainerStyle={styles.listContent}
-        />
-
-        <Text style={styles.footer}>
-          Total: {todos.length} | Completadas:{" "}
-          {todos.filter((t) => t.completed).length}
-        </Text>
+        <Text style={styles.userName}>{user?.displayName || "Usuario"}</Text>
+        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+          <Text style={styles.logoutText}>Salir</Text>
+        </TouchableOpacity>
       </View>
+
+      <Text style={styles.title}>Mis Tareas (Clean)</Text>
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          value={inputText}
+          onChangeText={setInputText}
+          placeholder="Nueva tarea..."
+          placeholderTextColor={
+            colorScheme === "dark"
+              ? defaultDarkTheme.placeholder
+              : defaultLightTheme.placeholder
+          }
+        />
+        <TouchableOpacity style={styles.addButton} onPress={handleAddTodo}>
+          <Text style={styles.addButtonText}>+</Text>
+        </TouchableOpacity>
+      </View>
+
+      <FlatList
+        data={todos}
+        renderItem={renderTodo}
+        keyExtractor={(item) => item.id.toString()}
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+      />
+
+      <Text style={styles.footer}>
+        Total: {todos.length} | Completadas:{" "}
+        {todos.filter((t) => t.completed).length}
+      </Text>
+    </View>
   );
 }
